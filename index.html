@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#62bce0">
+  <meta name="description" content="Nookr Lot Mapper - Map and manage subdivision lots">
+
+  <title>Nookr Lot Mapper</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/public/manifest.json">
+  <link rel="apple-touch-icon" href="/public/nookr-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+
+  <!-- PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="/src/style.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/nookr-icon.png">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.webmanifest">
+</head>
+
+<body>
+  <!-- Map Container -->
+  <div id="map"></div>
+
+  <!-- Toolbar -->
+  <div id="toolbar" class="toolbar">
+    <div class="toolbar-header">
+      <img src="/nookr-wordmark.png" alt="Nookr" class="logo-img" style="height: 20px;">
+      <span class="title" style="margin-left: 4px; font-size: 11px; color: var(--muted-foreground);">Lot Mapper</span>
+      <button class="toggle-btn" id="toggle-toolbar" title="Toggle Tools">▼</button>
+    </div>
+    <div class="toolbar-content" id="toolbar-content">
+      <!-- Project Selector -->
+      <div class="project-selector">
+        <label style="font-size: 11px; color: var(--muted-foreground);">Project:</label>
+        <select id="project-select" class="form-select" style="flex: 1; height: 28px; font-size: 12px;">
+          <option value="">Loading...</option>
+        </select>
+        <button class="action-btn" id="new-project" title="New Project" style="padding: 0 8px;">+</button>
+        <button class="action-btn" id="rename-project" title="Rename Project" style="padding: 0 8px;">✎</button>
+        <button class="action-btn danger" id="delete-project" title="Delete Project" style="padding: 0 8px;">×</button>
+      </div>
+      <div class="divider"></div>
+      <div class="tool-group">
+        <button class="tool-btn" data-tool="select" title="Select Lot (S)">
+          <span class="label">Select</span>
+        </button>
+        <button class="tool-btn" data-tool="draw" title="Draw Polygon (D)">
+          <span class="label">Draw</span>
+        </button>
+        <button class="tool-btn" data-tool="edit" title="Edit Vertices (E)">
+          <span class="label">Edit</span>
+        </button>
+        <button class="tool-btn" data-tool="delete" title="Delete Lot (X)">
+          <span class="label">Delete</span>
+        </button>
+      </div>
+      <div class="divider"></div>
+
+      <!-- Search Box -->
+      <div class="search-box">
+        <input type="text" id="lot-search" placeholder="Search lots..." autocomplete="off">
+        <div id="search-results" class="search-results hidden"></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="action-group">
+        <button class="action-btn" id="export-json" title="Export to JSON">
+          Export JSON
+        </button>
+        <button class="action-btn" id="export-geojson" title="Export to GeoJSON">
+          Export GeoJSON
+        </button>
+        <button class="action-btn" id="export-pdf" title="Export Map to PDF">
+          Export PDF
+        </button>
+        <button class="action-btn" id="import-btn" title="Import Data">
+          Import
+        </button>
+        <button class="action-btn" id="enter-coords" title="Enter survey coordinates">
+          Enter Coords
+        </button>
+        <button class="action-btn" id="download-area" title="Download tiles for offline use">
+          Download Area
+        </button>
+        <button class="action-btn" id="show-cached-areas" title="Show/hide downloaded areas">
+          Show Cached
+        </button>
+        <button class="action-btn" id="set-origin" title="Set project origin point">
+          Set Origin
+        </button>
+        <button class="action-btn" id="manage-areas" title="Manage lot groupings">
+          Areas
+        </button>
+        <button class="action-btn" id="quick-add-area" title="Select multiple lots to add to area">
+          Quick Add
+        </button>
+        <button class="action-btn" id="edge-detect" title="Detect edges in satellite imagery">
+          Edge Detect
+        </button>
+        <button class="action-btn" id="share-code" title="Generate shareable code">
+          Share Code
+        </button>
+        <button class="action-btn" id="import-code" title="Import from share code">
+          Import Code
+        </button>
+        <button class="action-btn" id="undo-btn" title="Undo (Ctrl+Z)" disabled>
+          Undo
+        </button>
+        <button class="action-btn danger" id="clear-all" title="Clear All Lots">
+          Clear All
+        </button>
+      </div>
+      <div class="divider"></div>
+      <div class="stats">
+        <span id="lot-count">Lots: 0</span>
+        <span id="offline-status" class="status-badge online">● Online</span>
+      </div>
+    </div>
+    <input type="file" id="import-file" accept=".json,.geojson" style="display: none;">
+  </div>
+
+  <!-- Lot Details Panel -->
+  <div id="details-panel" class="details-panel hidden">
+    <div class="panel-header">
+      <span>Lot Details</span>
+      <button class="close-btn" id="close-details">×</button>
+    </div>
+    <div class="panel-content">
+      <div class="form-group">
+        <label for="lot-number">Lot Number</label>
+        <input type="text" id="lot-number" placeholder="e.g., 12">
+      </div>
+      <div class="form-group">
+        <label for="block-number">Block Number</label>
+        <input type="text" id="block-number" placeholder="e.g., 3">
+      </div>
+      <div class="form-group">
+        <label for="owner-name">Owner Name</label>
+        <input type="text" id="owner-name" placeholder="e.g., Juan Dela Cruz">
+      </div>
+      <div class="form-group">
+        <label for="lot-status">Status</label>
+        <select id="lot-status" class="form-select">
+          <option value="available">🟢 Available</option>
+          <option value="reserved">🟡 Reserved</option>
+          <option value="sold">🔴 Sold</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="lot-area">Area</label>
+        <input type="text" id="lot-area" readonly>
+      </div>
+      <div class="form-group">
+        <label for="lot-coords">Coordinates</label>
+        <textarea id="lot-coords" readonly rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="lot-notes">Notes</label>
+        <textarea id="lot-notes" rows="2" placeholder="Additional notes..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Areas/Groups</label>
+        <div id="lot-areas-checkboxes" class="checkbox-group">
+          <em class="text-muted">No areas created yet</em>
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button class="save-btn" id="save-lot">Save</button>
+        <button class="action-btn" id="share-lot" title="Copy share link">Share</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layer Control -->
+  <div id="layer-control" class="layer-control">
+    <button class="layer-btn active" data-layer="street" title="Street Map">🗺️</button>
+    <button class="layer-btn" data-layer="clean" title="Clean (No Labels)">🧹</button>
+    <button class="layer-btn" data-layer="satellite" title="Satellite">🛰️</button>
+    <button class="layer-btn" data-layer="dark" title="Dark Mode">🌙</button>
+    <button class="layer-btn" id="gps-locate" title="My Location">📍</button>
+  </div>
+
+  <!-- Distance Ruler Bar -->
+  <div id="distance-bar" class="distance-bar hidden">
+    <div class="distance-info">
+      <span id="distance-value">--</span>
+      <span id="distance-bearing">--</span>
+    </div>
+    <span id="distance-label">to selected lot</span>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div id="fab-container" class="fab-container">
+    <button class="fab-main" id="fab-toggle" title="Quick Actions">✨</button>
+    <div class="fab-menu hidden">
+      <button class="fab-item" data-action="draw" title="Draw">✏️</button>
+      <button class="fab-item" data-action="edge-detect" title="Edge Detect">🔍</button>
+      <button class="fab-item" data-action="gps" title="GPS">📍</button>
+      <button class="fab-item" data-action="undo" title="Undo">↩️</button>
+    </div>
+  </div>
+
+  <!-- Offline Cache Modal -->
+  <div id="cache-modal" class="modal hidden">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <span>💾 Offline Map Manager</span>
+        <button class="close-btn" id="close-cache-modal">×</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Cache Stats -->
+        <div class="cache-stats-card">
+          <div class="stat-item">
+            <span class="stat-label">Cached Tiles</span>
+            <strong class="stat-value" id="cache-tile-count">Calculating...</strong>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Size</span>
+            <strong class="stat-value" id="cache-storage-used">...</strong>
+          </div>
+          <div class="stat-actions">
+            <button class="action-btn danger small" id="clear-cache-btn">🗑️ Clear Cache</button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="modal-tabs">
+          <button class="tab-btn active" data-tab="download">Download New Area</button>
+          <button class="tab-btn" data-tab="regions">Saved Regions</button>
+        </div>
+
+        <!-- Download Tab -->
+        <div class="tab-content active" id="tab-download">
+          <p class="modal-hint">Pre-download the current map view (+ surrounding buffer) for offline use.</p>
+
+          <div class="form-group">
+            <label>Zoom Detail Level</label>
+            <select id="download-zoom-level" class="form-select">
+              <option value="high">High Detail (Zoom 14-22) - Best for Surveying</option>
+              <option value="med" selected>Standard (Zoom 14-19) - Recommended</option>
+              <option value="low">Low Detail (Zoom 14-17) - Overview Only</option>
+            </select>
+          </div>
+
+          <div class="download-estimate">
+            <div class="est-item">Est. Tiles: <strong id="est-tile-count">0</strong></div>
+            <div class="est-item">Est. Size: <strong id="est-size">0 MB</strong></div>
+          </div>
+
+          <!-- Progress -->
+          <div id="download-progress-container" class="hidden">
+            <div class="progress-bar">
+              <div class="progress-fill" id="download-progress"></div>
+            </div>
+            <div class="progress-text">
+              <span id="download-status">Downloading...</span>
+              <span id="download-count">0/0</span>
+            </div>
+          </div>
+
+          <div class="modal-footer no-border">
+            <button class="action-btn danger" id="cancel-download" style="display:none;">Cancel</button>
+            <button class="action-btn primary full-width" id="start-download">Start Download</button>
+          </div>
+        </div>
+
+        <!-- Regions Tab -->
+        <div class="tab-content hidden" id="tab-regions">
+          <div class="regions-list" id="regions-list">
+            <p class="empty-state">No saved regions yet.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Areas Management Modal -->
+  <div id="areas-modal" class="modal hidden">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <span>Manage Areas</span>
+        <button class="close-btn" id="close-areas-modal">×</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Search & Create -->
+        <div class="areas-toolbar">
+          <input type="text" id="area-search" placeholder="Search areas..." class="form-input">
+          <button class="action-btn primary" id="create-area-btn">+ New Area</button>
+        </div>
+
+        <!-- Area List -->
+        <div class="areas-list" id="areas-list">
+          <p class="empty-state">No areas created yet. Click "New Area" to create one.</p>
+        </div>
+
+        <!-- Create/Edit Form (hidden by default) -->
+        <div id="area-form" class="area-form hidden">
+          <div class="form-group">
+            <label>Area Name</label>
+            <input type="text" id="area-name" placeholder="e.g., Phase 1, Block A">
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <div class="color-picker">
+              <input type="color" id="area-color" value="#3498db">
+              <span id="area-color-preview" class="color-swatch" style="background: #3498db;"></span>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="action-btn" id="cancel-area-form">Cancel</button>
+            <button class="action-btn primary" id="save-area-btn">Save Area</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Coordinate Input Modal -->
+  <div id="coords-modal" class="modal hidden">
+    <div class="modal-content coords-modal">
+      <div class="modal-header">
+        <span>Enter Survey Coordinates</span>
+        <button class="close-btn" id="close-coords-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">Paste coordinates from official survey (one per line):</p>
+        <div class="format-examples">
+          <small>Formats: <code>lat, lng</code> or <code>14.6392, 121.0794</code></small>
+        </div>
+        <textarea id="coords-input" placeholder="14.6392, 121.0794
+14.6395, 121.0794
+14.6395, 121.0797
+14.6392, 121.0797" rows="8"></textarea>
+        <div class="form-group">
+          <label for="coords-lot-number">Lot Number (optional)</label>
+          <input type="text" id="coords-lot-number" placeholder="e.g., 12">
+        </div>
+        <div class="form-group">
+          <label for="coords-block-number">Block Number (optional)</label>
+          <input type="text" id="coords-block-number" placeholder="e.g., 5">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" id="create-from-coords">Create Lot</button>
+        <button class="action-btn secondary" id="cancel-coords">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content confirm-modal">
+      <div class="modal-header">
+        <h3 id="confirm-title">Confirm</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message">Are you sure?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn danger" id="confirm-yes">Delete</button>
+        <button class="action-btn secondary" id="confirm-no">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Code Modal -->
+  <div id="share-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>🔗 Share Project Code</span>
+        <button class="close-btn" id="close-share-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 8px; font-size: 12px;">Share this code to let others import your project:</p>
+        <textarea id="share-code-output" readonly rows="4"
+          style="width: 100%; font-family: monospace; font-size: 11px;"></textarea>
+        <button class="action-btn" id="copy-share-code" style="margin-top: 8px; width: 100%;">📋 Copy to
+          Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Code Modal -->
+  <div id="import-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>📥 Import from Share Code</span>
+        <button class="close-btn" id="close-import-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 8px; font-size: 12px;">Paste a share code to import lots:</p>
+        <textarea id="import-code-input" rows="4" placeholder="Paste share code here..."
+          style="width: 100%; font-family: monospace; font-size: 11px;"></textarea>
+        <button class="action-btn" id="import-code-submit" style="margin-top: 8px; width: 100%;">📥 Import as New
+          Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

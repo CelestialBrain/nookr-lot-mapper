@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOA Lot Mapper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <span class="popup-logo">🏘️</span>
+      <h1 class="popup-title">HOA Lot Mapper</h1>
+    </header>
+
+    <main class="popup-content">
+      <div class="status-card" id="status-card">
+        <div class="status-icon">🗺️</div>
+        <div class="status-text">
+          <p class="status-main">Ready to map lots</p>
+          <p class="status-sub">Open Google Maps to get started</p>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h2>Quick Start</h2>
+        <ol class="quick-start-list">
+          <li>Open Google Maps in satellite view</li>
+          <li>Navigate to your subdivision</li>
+          <li>Click a tool from the overlay toolbar</li>
+          <li>Draw or auto-detect lot boundaries</li>
+          <li>Export data for your HOA app</li>
+        </ol>
+      </div>
+
+      <div class="info-section">
+        <h2>Keyboard Shortcuts</h2>
+        <div class="shortcuts-grid">
+          <div class="shortcut">
+            <kbd>S</kbd>
+            <span>Select</span>
+          </div>
+          <div class="shortcut">
+            <kbd>D</kbd>
+            <span>Draw</span>
+          </div>
+          <div class="shortcut">
+            <kbd>A</kbd>
+            <span>AI Select</span>
+          </div>
+          <div class="shortcut">
+            <kbd>E</kbd>
+            <span>Edit</span>
+          </div>
+          <div class="shortcut">
+            <kbd>X</kbd>
+            <span>Delete</span>
+          </div>
+          <div class="shortcut">
+            <kbd>Esc</kbd>
+            <span>Deactivate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h2>Tips</h2>
+        <ul class="tips-list">
+          <li>🪄 <strong>AI Select</strong> works best on contrasting rooftops</li>
+          <li>✏️ <strong>Double-click</strong> to complete a polygon</li>
+          <li>🔧 <strong>Drag vertices</strong> in Edit mode to adjust</li>
+          <li>💾 Data saves automatically to browser storage</li>
+        </ul>
+      </div>
+    </main>
+
+    <footer class="popup-footer">
+      <a href="https://www.google.com/maps" target="_blank" class="open-maps-btn">
+        🗺️ Open Google Maps
+      </a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

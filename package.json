@@ -1,0 +1,22 @@
+{
+  "name": "nookr-lot-mapper",
+  "version": "1.0.0",
+  "description": "Leaflet-based lot mapping application with offline support",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "idb": "^8.0.0",
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
+    "lz-string": "^1.5.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.0"
+  }
+}
